@@ -14,22 +14,26 @@ const colour2 = "#ffffff44";
 myCanvas.addEventListener("mousedown", createBox);
 
 function createBox(e){
-    const box = document.createElementNS(ns, "rect");
-    box.setAttribute("x", e.offsetX);
-    box.setAttribute("y", e.offsetY);
-    box.setAttribute("fill", colour2);
-    myCanvas.appendChild(box);
-    const newChannel = new Tone.Channel(-32).toDestination();
-    const newOsc = new Tone.Oscillator(440, "sawtooth").connect(newChannel);
-    newOsc.start();
-    const dragThisBox = (ev) => {
-        dragBox(ev, box, newOsc, newChannel, [e.offsetX, e.offsetY]);
+    // check for double mousedown
+    if(e.detail === 2){
+        const box = document.createElementNS(ns, "rect");
+        box.setAttribute("x", e.offsetX);
+        box.setAttribute("y", e.offsetY);
+        box.setAttribute("width", 10);
+        box.setAttribute("height", 10);
+        box.setAttribute("fill", colour2);
+        myCanvas.appendChild(box);
+        const newChannel = new Tone.Channel(-32).toDestination();
+        const newOsc = new Tone.Oscillator(440, "sawtooth").connect(newChannel);
+        newOsc.start();
+        const dragThisBox = (ev) => {
+            dragBox(ev, box, newOsc, newChannel, [e.offsetX, e.offsetY]);
+        }
+        window.addEventListener("mousemove", dragThisBox);
+        window.addEventListener("mouseup", () => {
+            window.removeEventListener("mousemove", dragThisBox);
+        });
     }
-    window.addEventListener("mousemove", dragThisBox);
-    window.addEventListener("mouseup", () => {
-        window.removeEventListener("mousemove", dragThisBox);
-    });
-
 }
 
 const dragBox = (e, box, osc, channel, startCoords) => {
