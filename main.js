@@ -38,9 +38,16 @@ myCanvas.addEventListener("mousedown", createOscShape);
 function createOscShape(e){
     // check for double mousedown
     if(e.detail === 2){
-        const shape = document.createElementNS(ns, "rect");
+        const shape = document.createElementNS(ns, "polygon");
         const newId = oscShapes.length;
         shape.dataset.shapeID = newId;
+        let pointsList = [
+            [e.offsetX, e.offsetY],
+            [e.offsetX + 1, e.offsetY],
+            [e.offsetX + 1, e.offsetY + 1],
+            [e.offsetX, e.offsetY + 1]
+        ];
+        shape.setAttribute("points", pointListToPoints(pointsList));
         const newOsc = new Tone.Oscillator(oscOptions);
         const newChannel = new Tone.Channel(channelOptions);
         const oscShapeInit = {
@@ -50,14 +57,12 @@ function createOscShape(e){
             channel: newChannel,
             // measured from top/right
             pos: [e.offsetX, e.offsetY],
-            size: [1,1]
+            pointsList: pointsList
         }
         oscShapes.push(oscShapeInit);
         newOsc.chain(newChannel, Tone.Destination);
-        shape.setAttribute("width", 1);
-        shape.setAttribute("height", 1);
         shape.setAttribute("fill", colour2);
-        setOscShapePos(oscShapeInit);
+        setOscShapeCentre(oscShapeInit);
         newOsc.start();
         myCanvas.appendChild(shape);
         const initialScale = (e) => {
@@ -70,35 +75,43 @@ function createOscShape(e){
     }
 }
 
-function setOscShapePos(oscShape){
-    oscShape.shape.setAttribute("x", oscShape.pos[0]);
-    const centreX = oscShape.pos[0] + (oscShape.size[0] / 2);
-    oscShape.shape.setAttribute("y", oscShape.pos[1]);
-    const centreY = oscShape.pos[1] + (oscShape.size[1] / 2);
+function setOscShapeCentre(oscShape){
+    const centreX = oscShape.pointsList[2][0] - oscShape.pointsList[0][0];
+    const centreY = oscShape.pointsList[2][1] - oscShape.pointsList[0][1];
+    //oscShape.shape.setAttribute("x", oscShape.pos[0]);
+    //const centreX = oscShape.pos[0] + (oscShape.size[0] / 2);
+    //oscShape.shape.setAttribute("y", oscShape.pos[1]);
+    //const centreY = oscShape.pos[1] + (oscShape.size[1] / 2);
     oscShape.channel.set({
-        // distance from centre x normalised to -1 to 1
-        pan: -1 + (centreX / canvasHeight * 2)
+        //distance from centre x normalised to -1 to 1
+       pan: -1 + (centreX / canvasHeight * 2)
     });
+    console.log(-1 + (centreX / canvasHeight * 2))
     oscShape.osc.set({
-        // distance from the centre y
-        detune: (centreY - (canvasHeight / 2)) / detuneMult
+        //distance from the centre y
+       detune: (centreY - (canvasHeight / 2)) / detuneMult
     });
     //update pos tba for normal drag
 }
 
 // toDo getting some out of range stuff with wild dragging
-// also need to handle going up and left instead of down right
+// need to handle out of canvas
 
 function scaleOscShape(e, oscShape){
-    const newWidth = Math.abs(e.offsetX - oscShape.pos[0]);
-    const newHeight = Math.abs(e.offsetY - oscShape.pos[1]);
-    oscShape.shape.setAttribute("width", newWidth);
-    oscShape.shape.setAttribute("height", newHeight);
+    const newWidth = e.offsetX - oscShape.pos[0];
+    const newHeight = e.offsetY - oscShape.pos[1];
+    let newPointsList = [
+        [oscShape.pos[0], oscShape.pos[1]],
+        [oscShape.pos[0] + newWidth, oscShape.pos[1]],
+        [oscShape.pos[0] + newWidth, oscShape.pos[1] + newHeight],
+        [oscShape.pos[0], oscShape.pos[1] + newHeight]
+    ];
+    oscShape.shape.setAttribute("points", pointListToPoints(newPointsList));
+    oscShapes[oscShape.id].pointsList = newPointsList;
     oscShape.channel.set({
         volume: -16 + (16 * ((newWidth * newHeight) / canvasArea))
     });
-    oscShapes[oscShape.id].size = [newWidth, newHeight];
-    setOscShapePos(oscShapes[oscShape.id]);
+    setOscShapeCentre(oscShapes[oscShape.id]);
 }
 
 function selectBox(e){
@@ -113,3 +126,10 @@ function startDrag(e) {
 
 }
 
+function pointListToPoints(pointList){
+    let pointsString = ``;
+    pointList.forEach((point) => {
+       pointsString += `${point[0]},${point[1]} `;
+    });
+    return pointsString;
+}
