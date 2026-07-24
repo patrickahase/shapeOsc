@@ -5,10 +5,10 @@ const canvasWidth = myCanvas.getAttribute("width");
 const canvasHeight = myCanvas.getAttribute("height");
 const canvasArea = canvasWidth * canvasHeight;
 
-
-const colour1 = "black";
+// using this for box colour : contains partial opacity
 const colour2 = "#ffffff44";
 
+// currently selected box
 let selectedBox = null;
 
 let oscShapes = [
@@ -65,11 +65,12 @@ function createOscShape(e){
         setOscShapeCentre(oscShapeInit);
         newOsc.start();
         myCanvas.appendChild(shape);
+        shape.addEventListener("click", selectBox);
         const initialScale = (e) => {
             scaleOscShape(e, oscShapeInit);
         }
         myCanvas.addEventListener("mousemove", initialScale);
-        myCanvas.addEventListener("mouseup", () => {
+        window.addEventListener("mouseup", () => {
             myCanvas.removeEventListener("mousemove", initialScale);
         });
     }
@@ -91,7 +92,6 @@ function setOscShapeCentre(oscShape){
 
 function scaleOscShape(e, oscShape){
     const newWidth = e.offsetX - oscShape.pos[0];
-    console.log(e.offsetX)
     const newHeight = e.offsetY - oscShape.pos[1];
     let newPointsList = [
         [oscShape.pos[0], oscShape.pos[1]],
@@ -108,15 +108,48 @@ function scaleOscShape(e, oscShape){
 }
 
 function selectBox(e){
-    Array.from(document.getElementsByClassName("selectedBox")).forEach((elm) => {
-        elm.classList.remove("selectedBox");
-    })
-    selectedBox = e.target;
-    selectedBox.classList.add("selectedBox");
+    // unselect
+    if(e.target.classList.contains("selectedBox")){
+        e.target.classList.remove("selectedBox");
+    } else {
+        Array.from(document.getElementsByClassName("selectedBox")).forEach((elm) => {
+            elm.classList.remove("selectedBox");
+        })
+        selectedBox = e.target;
+        selectedBox.classList.add("selectedBox");
+        selectedBox.addEventListener("mousedown", startDrag);
+    }
 }
 
 function startDrag(e) {
+    const startPos = [e.clientX, e.clientY];
+    const boxID = e.target.dataset.shapeID;
+    const moveBox = (e) => {
+        dragBox(e, startPos, boxID);
+    };
+    myCanvas.addEventListener("mousemove", moveBox);
+    window.addEventListener("mouseup", () => {
+        myCanvas.removeEventListener("mousemove", moveBox);
+    });
+}
 
+function dragBox(e, startPos, boxID){
+    const oscShape = oscShapes[boxID];
+    const offset = [
+        e.clientX - startPos[0],
+        e.clientY - startPos[1]
+    ]
+    let newPointsList = oscShape.pointsList.map(
+        point => [
+            point[0] + offset[0],
+            point[1] + offset[1]
+        ]
+    );
+    // console.log(newPointsList);
+    // console.log(oscShape.pointsList[0][0], offset[0], oscShape.pointsList[0][0] + offset[0]);
+    oscShape.shape.setAttribute("points", pointListToPoints(newPointsList));
+    oscShapes[oscShape.id].pointsList = newPointsList;
+    setOscShapeCentre(oscShapes[oscShape.id]);
 }
 
 function pointListToPoints(pointList){
