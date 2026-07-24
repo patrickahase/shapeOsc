@@ -102,7 +102,7 @@ function scaleOscShape(e, oscShape){
     oscShape.shape.setAttribute("points", pointListToPoints(newPointsList));
     oscShapes[oscShape.id].pointsList = newPointsList;
     oscShape.channel.set({
-        volume: -16 + (16 * ((newWidth * newHeight) / canvasArea))
+        volume: -26 + (16 * ((newWidth * newHeight) / canvasArea))
     });
     setOscShapeCentre(oscShapes[oscShape.id]);
 }
@@ -122,10 +122,11 @@ function selectBox(e){
 }
 
 function startDrag(e) {
-    const startPos = [e.clientX, e.clientY];
     const boxID = e.target.dataset.shapeID;
+    const startPoints = oscShapes[boxID].pointsList;
+    const startPos = [e.clientX, e.clientY];
     const moveBox = (e) => {
-        dragBox(e, startPos, boxID);
+        dragBox(e, boxID, startPoints, startPos);
     };
     myCanvas.addEventListener("mousemove", moveBox);
     window.addEventListener("mouseup", () => {
@@ -133,13 +134,13 @@ function startDrag(e) {
     });
 }
 
-function dragBox(e, startPos, boxID){
+function dragBox(e, boxID, startPoints, startPos){
     const oscShape = oscShapes[boxID];
     const offset = [
         e.clientX - startPos[0],
         e.clientY - startPos[1]
     ]
-    let newPointsList = oscShape.pointsList.map(
+    let newPointsList = startPoints.map(
         point => [
             point[0] + offset[0],
             point[1] + offset[1]
