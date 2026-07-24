@@ -29,7 +29,7 @@ const channelOptions = {
     volume: -32
 };
 
-const detuneMult = 10;
+const detuneMult = 2;
 
 // const synth = new Tone.PolySynth().toDestination();
 
@@ -68,25 +68,20 @@ function createOscShape(e){
         const initialScale = (e) => {
             scaleOscShape(e, oscShapeInit);
         }
-        window.addEventListener("mousemove", initialScale);
-        window.addEventListener("mouseup", () => {
-            window.removeEventListener("mousemove", initialScale);
+        myCanvas.addEventListener("mousemove", initialScale);
+        myCanvas.addEventListener("mouseup", () => {
+            myCanvas.removeEventListener("mousemove", initialScale);
         });
     }
 }
 
 function setOscShapeCentre(oscShape){
-    const centreX = oscShape.pointsList[2][0] - oscShape.pointsList[0][0];
-    const centreY = oscShape.pointsList[2][1] - oscShape.pointsList[0][1];
-    //oscShape.shape.setAttribute("x", oscShape.pos[0]);
-    //const centreX = oscShape.pos[0] + (oscShape.size[0] / 2);
-    //oscShape.shape.setAttribute("y", oscShape.pos[1]);
-    //const centreY = oscShape.pos[1] + (oscShape.size[1] / 2);
+    const centreX = oscShape.pointsList[0][0] + ((oscShape.pointsList[2][0] - oscShape.pointsList[0][0]) / 2);
+    const centreY = oscShape.pointsList[0][1] + ((oscShape.pointsList[2][1] - oscShape.pointsList[0][1]) / 2);
     oscShape.channel.set({
         //distance from centre x normalised to -1 to 1
-       pan: -1 + (centreX / canvasHeight * 2)
+       pan: -1 + ((centreX / canvasHeight) * 2)
     });
-    console.log(-1 + (centreX / canvasHeight * 2))
     oscShape.osc.set({
         //distance from the centre y
        detune: (centreY - (canvasHeight / 2)) / detuneMult
@@ -94,11 +89,9 @@ function setOscShapeCentre(oscShape){
     //update pos tba for normal drag
 }
 
-// toDo getting some out of range stuff with wild dragging
-// need to handle out of canvas
-
 function scaleOscShape(e, oscShape){
     const newWidth = e.offsetX - oscShape.pos[0];
+    console.log(e.offsetX)
     const newHeight = e.offsetY - oscShape.pos[1];
     let newPointsList = [
         [oscShape.pos[0], oscShape.pos[1]],
